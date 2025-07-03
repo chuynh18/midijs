@@ -1,5 +1,10 @@
 "use strict";
 
+const midiConstants = {
+    MThd: "Header",
+    MTrk: "Track"
+};
+
 const fileInput = document.getElementById("midi");
 
 fileInput.addEventListener("change", async () => {
@@ -7,11 +12,21 @@ fileInput.addEventListener("change", async () => {
     const arrayBuffer = file.arrayBuffer().then(buffer =>
         {
             const dataView = new DataView(buffer);
-            console.log(dataView.getUint8(0));
-            console.log(dataView.getUint8(1));
-            console.log(dataView.getUint8(2));
-            console.log(dataView.getUint8(3));
+            findMagicStrings(buffer, dataView.byteLength);
         }
     );
 });
 
+function findMagicStrings(buffer, dataViewByteLength) {
+    for (let i = 0; i < dataViewByteLength - 4; i += 1) {
+        const tempDataView = new DataView(buffer, i, 4);
+        let magicString = "";
+        for (let j = 0; j < tempDataView.byteLength; j++) {
+            magicString += String.fromCharCode(tempDataView.getUint8(j));
+        }
+
+        if (midiConstants[magicString]) {
+            console.log(`${midiConstants[magicString]} found at byteLength ${i}.`);
+        }
+    }
+}

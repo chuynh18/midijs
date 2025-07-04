@@ -7,31 +7,30 @@ const midiConstants = {
     headerSize: 14
 };
 
-const fileInput = document.getElementById("midi");
-
-fileInput.addEventListener("change", async () => {
-    const file = fileInput.files[0];
-    const arrayBuffer = file.arrayBuffer().then(buffer =>
+export default async function getMidi(fileSelector) {
+    const file = fileSelector.files[0];
+    const retVal = await file.arrayBuffer().then(buffer =>
         {
-            const headerDataView = new DataView(buffer, 0, 14);
-            const header = parseHeader(headerDataView);
+            const dataView = new DataView(buffer);
+            const header = parseHeader(dataView);
 
             if (! header.isMidi) {
                 console.log("Not a valid MIDI file.");
                 return;
             }
             
-            const dataView = new DataView(buffer);
             const tracks = findTracks(dataView, dataView.byteLength);
             
             if (! validateMidi(header, tracks)) {
                 return;
             }
 
-            console.log(tracks);
+            return tracks;
         }
     );
-});
+
+    return retVal;
+}
 
 function findTracks(dataView, dataViewByteLength) {
     const trackStart = [];

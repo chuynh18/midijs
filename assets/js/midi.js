@@ -22,7 +22,7 @@ fileInput.addEventListener("change", async () => {
             }
             
             const dataView = new DataView(buffer);
-            const tracks = findTracks(buffer, dataView.byteLength);
+            const tracks = findTracks(dataView, dataView.byteLength);
             
             if (! validateMidi(header, tracks)) {
                 return;
@@ -33,11 +33,10 @@ fileInput.addEventListener("change", async () => {
     );
 });
 
-function findTracks(buffer, dataViewByteLength) {
+function findTracks(dataView, dataViewByteLength) {
     const trackStart = [];
     for (let i = 0; i < dataViewByteLength - 4; i += 1) {
-        const tempDataView = new DataView(buffer, i, 4);
-        let magicString = parseBytes(tempDataView, tempDataView.byteLength);
+        let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
             trackStart.push({
@@ -67,15 +66,15 @@ function parseDataViewSegment(dataView, startingByte, endingByte) {
     return bytes;
 }
 
-function parseBytes(dataView, length) {
+function parseBytes(dataView, startingByte, endingByte) {
     let magicString = "";
-    const bytes = parseDataViewSegment(dataView, 0, length);
+    const bytes = parseDataViewSegment(dataView, startingByte, endingByte);
     bytes.forEach(byte => magicString += String.fromCharCode(byte));
     return magicString;
 }
 
 function isMidi(dataView) {
-    return midiConstants[parseBytes(dataView, midiConstants.magicStringSize)] ? true : false;
+    return midiConstants[parseBytes(dataView, 0, midiConstants.magicStringSize)] ? true : false;
 }
 
 function parseHeader(dataView) {

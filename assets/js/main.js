@@ -5,7 +5,10 @@ import getMidi from "./midi.js";
 const fileInput = document.getElementById("midi");
 
 fileInput.addEventListener("change", () => {
-    midi = getMidi(fileInput);
-    console.log(midi);
-    midi.then(result => console.log(result));
+    getMidi(fileInput)
+        .then(result => {
+            console.log(result);
+            // globalThis.midi = result; // if you want to make it available in the global scope
+        })
+        .catch(error => console.log(error));
 });

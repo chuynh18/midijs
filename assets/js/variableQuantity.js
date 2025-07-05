@@ -4,8 +4,8 @@
 // You will be among the first to foray into the depths of this code. We know not what horrors lurk within.
 
 /*
- * MIDI was introduced in 1983, slightly predating the 720 KB and 1.44 MB floppy disk formats. Therefore
- * storage was a major consideration for the designers of the MIDI format. They chose to encode certain
+ * MIDI was introduced in 1983, slightly predating the 3.5" 720 KB and 1.44 MB floppy disk formats. Storage
+ * was therefore a major consideration for the designers of the MIDI format. They chose to encode certain
  * values with variable lengths to save space. This makes the logic to parse MIDI tracks more involved.
  * 
  * The delta-time value ranges from 0x00000000 to 0x0FFFFFFF. However, rather than always using 4 bytes
@@ -14,11 +14,8 @@
  * very last one to 1. That is to say, the encoded delta-time can range from 1 to 4 bytes in length and
  * you know you're looking at the last byte when the MSB of that byte is 0.
  * 
- * To convert the delta-time representation to its actual value:
- * - variableQuantityToValue() takes in an array of numbers representing the decimal value of each byte
- * - transform each byte into its binary representation
- * - remove the MSB from each byte then concat the bytes; this is the delta-time value in binary!
- * - convert the above binary number to a decimal and return it
+ * It really sucks how stringly typing binary numbers makes the JS code more concise versus preserving the
+ * digits as actual numbers...
  */
 
 /**
@@ -27,37 +24,32 @@
  * @returns {number} Actual delta-time value
  */
 function variableQuantityToValue(byteArray) {
-    const byteArrayBinary = byteArray.map(byte => Uint8DecimalToBinary(byte));
-    const flatByteArrayBinaryRemoveMsbFromEach = byteArrayBinary.flatMap(byte => byte.slice(1));
-    return parseInt(flatByteArrayBinaryRemoveMsbFromEach.join(""), 2);
-}
-
-/**
- * Converts number to binary, enforces Uint8 
- * @param {Number} number decimal number that you want to convert
- * @returns {number[]} array representing number in binary
- */
-function Uint8DecimalToBinary(number) {
     const NUM_BITS_IN_UINT8 = 8; // no shit, Sherlock
 
-    if (number < 0 || number > 255) {
-        // this should never happen because we'll only ever feed in Uint8s from the MIDI file
-        // because midi.js is explicitly specifying dataView.getUint8()
-        throw new Error(`number ${number} is out of bounds, must be between 0 and 255 inclusive.`);
-    }
+    // byte.toString(2) - converts the byte to binary. but it's a string and it might not be 8 chars long
+    // leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8) - now it's 8 chars long. we zero pad to avoid changing the value
+    // the substring(1) chops off the first character which is the MSB
+    // finally, byteArray.map because we want to do these operations on every single byte
+    const test = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8).substring(1));
 
-    const numberArray = decimalToBinary(number);
-    return Array(NUM_BITS_IN_UINT8 - numberArray.length).fill(0) // create padding array of 0s
-        .concat(numberArray);
+    // concat the bits then parse the binary number to an int and return it
+    // concatenating strings in an array via reduce. my soul hurts so much it doesn't hurt anymore because it ceased to exist
+    return parseInt(test.reduce((accumulator, currentValue) => accumulator + currentValue), 2);
 }
 
-// sweet liberty can't liberate with this broken language
 /**
- * Naive function that will convert numbers of any size and will only use as many digits as necessary.
- * @param {Number} number decimal number that you want to convert
- * @returns {Array.<Number>} return number in base 2 but since JS no likey base 2 this is an array of 1s and 0s
+ * left pad a string with another string. if the string to use as padding is too short,
+ * it'll be repeated until it's long enough
+ * @param {string} inputString string to be left-padded
+ * @param {string} padString string to repeat and use as the padding
+ * @param {Number} desiredLength desired length of output string
  */
-function decimalToBinary(number) {
-    return Array.from(number.toString(2)) // number in base 2 but it's an array and the 1s and 0s are strings *moan*
-        .map(digit => Number(digit));
+function leftPad(inputString, padString, desiredLength) {
+    let padding = padString;
+    const padLength = desiredLength - inputString.length;
+    while (padding.length < padLength) {
+        padding += padString;
+    }
+
+    return padding.substring(0, padLength) + inputString;
 }

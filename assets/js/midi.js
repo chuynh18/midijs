@@ -55,7 +55,7 @@ export default async function getMidi(fileSelector) {
  */
 function findTracks(dataView, dataViewByteLength) {
     const trackStart = [];
-    for (let i = 0; i < dataViewByteLength - 4; i += 1) {
+    for (let i = 0; i < dataViewByteLength - 4; i++) {
         let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {

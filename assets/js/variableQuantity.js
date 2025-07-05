@@ -13,21 +13,19 @@
  * To convert the delta-time representation to its actual value:
  * - variableQuantityToValue() takes in an array of numbers representing the decimal value of each byte
  * - transform each byte into its binary representation
- * - strip the most significant bit from each byte and concatenate the result
- * - left pad the result with 0s - we now have a binary number
- * - return the binary number as a decimal number
+ * - strip the most significant bit from each byte and concatenate the result; this is the value in binary!
+ * - return the decimal representation of the binary number derived in the previous step
  */
 
 /**
- * Converts MIDI variable quantity representation of delta-time to its actual value
- * @param {number[]} byteArray 
- * @returns {number}
+ * Converts MIDI variable quantity delta-time to actual value
+ * @param {number[]} byteArray Array representing the raw delta-time bytes read from MIDI file
+ * @returns {number} Actual delta-time value
  */
 function variableQuantityToValue(byteArray) {
     const byteArrayBinary = byteArray.map(byte => Uint8DecimalToBinary(byte));
     const flatByteArrayBinaryRemoveMsbFromEach = byteArrayBinary.flatMap(byte => byte.slice(1));
-    const padded = Array(byteArrayBinary.length).fill(0).concat(flatByteArrayBinaryRemoveMsbFromEach);
-    return parseInt(padded.join(""), 2);
+    return parseInt(flatByteArrayBinaryRemoveMsbFromEach.join(""), 2);
 }
 
 /**

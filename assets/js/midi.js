@@ -1,6 +1,6 @@
 "use strict";
 
-import parseQuantity from "./variableQuantity.js";
+import parseQuantity from "./parse-quantity.js";
 
 const applicationSettings = {
     maxFileSizeBytes: 5*1024*1024 // maximum file size to parse

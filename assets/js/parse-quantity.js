@@ -18,6 +18,8 @@
 /**
  * Converts MIDI variable quantity delta-time to actual value
  * @param {number[]} byteArray Array representing the raw delta-time bytes read from MIDI file
+ * @param {boolean} isVariableQuantity true if byteArray represents a MIDI variable quantity,
+ * otherwise false if byteArray represents a Uint32. Defaults to true.
  * @returns {number} Actual delta-time value
  */
 export default function parseQuantity(byteArray, isVariableQuantity = true) {
@@ -26,7 +28,7 @@ export default function parseQuantity(byteArray, isVariableQuantity = true) {
     // converts each byte to binary, left pads each byte with 0s if necessary to make them 8 bits
     let byteArrayBinary = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8));
 
-    if (isVariableQuantity) byteArrayBinary = byteArrayBinary.substring(1);
+    if (isVariableQuantity) byteArrayBinary = byteArrayBinary.substring(1); // maybe choppity chop the MSB
 
     // concat the bits then parse the binary number to an int and return it (this is a string concatenation via reduce)
     return parseInt(byteArrayBinary.reduce((accumulator, currentValue) => accumulator + currentValue), 2);

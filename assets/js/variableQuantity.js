@@ -1,6 +1,22 @@
 "use strict";
 // TODO: convert this to a module and export variableQuantityToValue()
-// TODO: explain wtf variableQuantityToValue() is doing
+
+/*
+ * MIDI was introduced in 1983, slightly predating the 720 KB and 1.44 MB floppy disk formats. Therefore
+ * storage was a major consideration for the designers of the MIDI format. They chose to encode certain
+ * values with variable lengths to save space. This makes the logic to parse MIDI tracks more involved.
+ * 
+ * The delta-time value ranges from 0x00000000 to 0x0FFFFFFF. However, rather than always using 4 bytes
+ * to encode each delta-time value, only the necessary number of bytes are used. This is done by only
+ * using 7 of the 8 bits per byte and setting the MSB of all bytes other than the very last one to 1.
+ * 
+ * To convert the delta-time representation to its actual value:
+ * - variableQuantityToValue() takes in an array of numbers representing the decimal value of each byte
+ * - transform each byte into its binary representation
+ * - strip the most significant bit from each byte and concatenate the result
+ * - left pad the result with 0s - we now have a binary number
+ * - return the binary number as a decimal number
+ */
 
 /**
  * Converts MIDI variable quantity representation of delta-time to its actual value

@@ -1,5 +1,7 @@
 "use strict";
 
+import parseQuantity from "./variableQuantity.js";
+
 const applicationSettings = {
     maxFileSizeBytes: 5*1024*1024 // maximum file size to parse
 }
@@ -8,7 +10,8 @@ const midiConstants = {
     MThd: "Header", // MIDI headers start at the magic string "MThd"
     MTrk: "Track", // tracks start at the magic string "MTrk"
     magicStringSize: 4, // magic strings are always 4 bytes
-    headerSize: 14 // MIDI headers are 14 bytes
+    headerSize: 14, // MIDI headers are 14 bytes
+    trackHeaderAndLengthSize: 8 // MIDI track header is 4 bytes + length of track is also 4 bytes
 };
 
 /**
@@ -59,20 +62,24 @@ function findTracks(dataView, dataViewByteLength) {
         let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
+            const trackLength = parseQuantity(
+                parseDataViewSegment(
+                    dataView,
+                    i + midiConstants.magicStringSize,
+                    i + midiConstants.trackHeaderAndLengthSize
+                ),
+                false
+            );
+
             trackStart.push({
                 metadata: {
-                    startingBytes: i + midiConstants.magicStringSize
+                    startingBytes: i + midiConstants.trackHeaderAndLengthSize,
+                    trackLength: trackLength
                 }
             });
+
+            i += trackLength;
         }
-    }
-
-    for (let i = 0; i < trackStart.length - 1; i++) {
-        trackStart[i].metadata.bytesLength = trackStart[i+1].metadata.startingBytes - trackStart[i].metadata.startingBytes;
-    }
-
-    if (trackStart.at(-1)) {
-        trackStart.at(-1).metadata.bytesLength = dataViewByteLength - trackStart.at(-1).metadata.startingBytes;
     }
     
     return trackStart;

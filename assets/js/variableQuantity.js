@@ -1,5 +1,4 @@
 "use strict";
-// TODO: convert this to a module and export variableQuantityToValue()
 
 // You will be among the first to foray into the depths of this code. We know not what horrors lurk within.
 // Stringly-typing numbers seems to be the best way to work with non-decimal numbers in JavaScript... sigh
@@ -21,18 +20,20 @@
  * @param {number[]} byteArray Array representing the raw delta-time bytes read from MIDI file
  * @returns {number} Actual delta-time value
  */
-function variableQuantityToValue(byteArray) {
+export default function parseQuantity(byteArray, isVariableQuantity = true) {
     const NUM_BITS_IN_UINT8 = 8; // no shit, Sherlock
 
-    // converts each byte to binary, left pads each byte with 0s if necessary to make them 8 bits, then discards the MSB
-    const byteArrayBinary = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8).substring(1));
+    // converts each byte to binary, left pads each byte with 0s if necessary to make them 8 bits
+    let byteArrayBinary = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8));
+
+    if (isVariableQuantity) byteArrayBinary = byteArrayBinary.substring(1);
 
     // concat the bits then parse the binary number to an int and return it (this is a string concatenation via reduce)
     return parseInt(byteArrayBinary.reduce((accumulator, currentValue) => accumulator + currentValue), 2);
 }
 
 /**
- * left pad a string with another string. if the string to use as padding is too short,
+ * left pad inputString with padString. if the string to use as padding is too short,
  * repeat it until it is long enough
  * @param {string} inputString string to be left-padded
  * @param {string} padString string to repeat and use as the padding

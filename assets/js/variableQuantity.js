@@ -2,19 +2,24 @@
 // TODO: convert this to a module and export variableQuantityToValue()
 // TODO: explain wtf variableQuantityToValue() is doing
 
-// Brutal. I hate it.
+/**
+ * Converts MIDI variable quantity representation of delta-time to its actual value
+ * @param {number[]} byteArray 
+ * @returns {number}
+ */
 function variableQuantityToValue(byteArray) {
     const byteArrayBinary = byteArray.map(byte => Uint8DecimalToBinary(byte));
     const flatByteArrayBinaryRemoveMsbFromEach = byteArrayBinary.flatMap(byte => byte.slice(1));
     const padded = Array(byteArrayBinary.length).fill(0).concat(flatByteArrayBinaryRemoveMsbFromEach);
     const unflattened = unflattenUint8Array(padded);
-    return unflattened.map(byteArray => parseInt(byteArray.join(""), 2));
+    const valueArray = unflattened.map(byteArray => parseInt(byteArray.join(""), 2));
+    return convertValueArrayToValue(valueArray);
 }
 
 /**
  * Converts number to binary, enforces Uint8
  * @param {Number} number decimal number that you want to convert
- * @returns {Array.<Number>} array representing number in binary
+ * @returns {number[]} array representing number in binary
  */
 function Uint8DecimalToBinary(number) {
     const NUM_BYTES_IN_UINT8 = 8;
@@ -53,4 +58,16 @@ function unflattenUint8Array(flatArray) {
     }
 
     return result;
+}
+
+function convertValueArrayToValue(valueArray) {
+    const NUM_POSSIBLE_VALUES_UINT8 = 256;
+    let answer = 0;
+    let exponent = valueArray.length - 1;
+
+    for (let i = 0; i < valueArray.length; i++) {
+        answer += valueArray[i] * Math.pow(NUM_POSSIBLE_VALUES_UINT8, exponent--);
+    }
+
+    return answer;
 }

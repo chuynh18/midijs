@@ -1,6 +1,6 @@
 "use strict";
 
-import parseVaribleLengthQuantity from "./parse-quantity.js";
+import parseVaribleLengthValue from "./parse-quantity.js";
 
 const applicationSettings = {
     maxFileSizeBytes: 5*1024*1024 // maximum file size to parse
@@ -127,17 +127,12 @@ function isMidi(dataView) {
  * @param {DataView} dataView the DataView of an ArrayBuffer that contains the entire MIDI file
 */
 function parseHeader(dataView) {
-    const bytes = parseDataViewSegment(
-        dataView,
-        midiConstants.magicStringSize,
-        midiConstants.headerSize
-    );
-
+    // MIDI format data is always at offset 8, track count at offset 10, and timing at offset 12
     return {
         isMidi: isMidi(dataView),
-        format: bytes[5],
-        numTracks: bytes[7],
-        timing: bytes[9]
+        format: dataView.getUint16(8),
+        numTracks: dataView.getUint16(10),
+        timing: dataView.getUint16(12)
     };
 }
 

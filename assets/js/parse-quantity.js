@@ -9,18 +9,18 @@
  * 
  * The delta-time value captures how much time exists between MIDI events and ranges from 0x00000000 to
  * 0x0FFFFFFF. However, rather than always using 4 bytes to encode each delta-time value, only the necessary
- * number of bytes are used. This is called a variable-length quantity and is done by only using 7 of the 8
+ * number of bytes are used. This is called a variable-length value (VLV) and is done by only using 7 of the 8
  * bits per byte and setting the most significant bit (MSB) of all bytes other than the very last one to 1.
  * That is to say, the encoded delta-time can range from 1 to 4 bytes in length and you know you're looking
  * at the last byte when the MSB of that byte is 0.
  */
 
 /**
- * Parses variable-length quantities.
+ * Parses variable-length value.
  * @param {number[]} byteArray Array representing the raw bytes read from MIDI file
  * @returns {number} The encoded value
  */
-export default function parseVaribleLengthQuantity(byteArray) {
+export default function parseVaribleLengthValue(byteArray) {
     const BITS_TO_SHIFT = 7; // always 7 because variable length quantities don't use the MSB to hold value data
     return twiddle(byteArray, BITS_TO_SHIFT);
 }
@@ -37,7 +37,7 @@ function twiddle(byteArray, bitsToShift) {
 
     for (let i = 0; i < byteArray.length; i++) {
         // This is an artifact from when this function handled both fixed and variable-length quantities
-        // Now we only handle VLQs because duh, just interpret 4 byte fixed quantities as Uint32
+        // Now we only handle VLVs because duh, just interpret 4 byte fixed quantities as Uint32
         // Technically we no longer need the "! byteArray[i]" part, but it doesn't harm anything
         if (! byteArray[i] && ! hasSkippedFirstBitShift) continue;
 

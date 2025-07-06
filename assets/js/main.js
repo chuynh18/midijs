@@ -1,6 +1,6 @@
 "use strict";
 
-import getMidi from "./midi.js";
+import getMidi from "./midi-serializer.js";
 
 const fileInput = document.getElementById("midi");
 

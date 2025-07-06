@@ -17,3 +17,4 @@ function vlqTest(vlqObj) {
 }
 
 vlq.forEach(obj => vlqTest(obj));
+// end VLQ tests

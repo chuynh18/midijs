@@ -36,14 +36,19 @@ export default async function getMidi(fileSelector) {
                 const fileExtension = fileSplit.length === 1 ? "an unknown type of" : `a ${fileSplit[fileSplit.length - 1]}`;
                 throw new Error(`Not a valid MIDI file. ${fileName} is ${fileExtension} file.`);
             }
-            
-            const tracks = findTracks(dataView, dataView.byteLength);
+        
+            const tracks = parseTracks(dataView, dataView.byteLength);
             
             if (! validateMidi(header, tracks)) {
                 return;
             }
 
-            return tracks;
+            const midi = {
+                header: header,
+                tracks: tracks
+            };
+
+            return midi;
         }
     );
 
@@ -56,19 +61,21 @@ export default async function getMidi(fileSelector) {
  * @param {number} dataViewByteLength
  * @returns {object}
  */
-function findTracks(dataView, dataViewByteLength) {
+function parseTracks(dataView, dataViewByteLength) {
     const trackStart = [];
     for (let i = 0; i < dataViewByteLength - 4; i++) {
         let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
             const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
+            const startingBytes = i + midiConstants.trackHeaderAndLengthSize;
 
             trackStart.push({
                 metadata: {
-                    startingBytes: i + midiConstants.trackHeaderAndLengthSize,
+                    startingBytes: i + startingBytes,
                     trackLength: trackLength
-                }
+                },
+                track: parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength)
             });
 
             i += trackLength;

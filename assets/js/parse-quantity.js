@@ -22,16 +22,21 @@
  * otherwise false if byteArray represents a Uint32. Defaults to true.
  * @returns {number} Actual delta-time value
  */
+const NUM_BITS_IN_A_BYTE = 8; // no shit, Sherlock
+
 export default function parseQuantity(byteArray, isVariableQuantity = true) {
-    const NUM_BITS_IN_UINT8 = 8; // no shit, Sherlock
+    const bitsToShift = isVariableQuantity ? 7 : 8;
+    console.log(`twiddle: ${twiddle(byteArray, bitsToShift)}`);
 
     // converts each byte to binary, left pads each byte with 0s if necessary to make them 8 bits
-    let byteArrayBinary = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_UINT8));
+    let byteArrayBinary = byteArray.map(byte => leftPad(byte.toString(2), "0", NUM_BITS_IN_A_BYTE));
 
-    if (isVariableQuantity) byteArrayBinary = byteArrayBinary.substring(1); // maybe choppity chop the MSB
+    if (isVariableQuantity) byteArrayBinary = byteArrayBinary.map(byte => byte.substring(1)); // maybe choppity chop the MSB
 
     // concat the bits then parse the binary number to an int and return it (this is a string concatenation via reduce)
-    return parseInt(byteArrayBinary.reduce((accumulator, currentValue) => accumulator + currentValue), 2);
+    console.log(`parseInt: ${parseInt(byteArrayBinary.reduce((accumulator, currentValue) => accumulator + currentValue), 2)}`);
+    
+    return twiddle(byteArray, bitsToShift);
 }
 
 /**
@@ -49,4 +54,50 @@ function leftPad(inputString, padString, desiredLength) {
     }
 
     return padding.substring(0, padLength) + inputString;
+}
+
+/**
+ * Concatenates bytes together
+ * @param {[number]} byteArray the byte array to concatenate
+ * @param {number} bits number of bits to shift by. 7 bits for encoded delta time, 8 for a normal concatenation
+ */
+function twiddle(byteArray, bitsToShift) {
+    let result = 0;
+    const mask = calculateMask(bitsToShift);
+    let hasSkippedFirstBitShift = false;
+
+    for (let i = 0; i < byteArray.length; i++) {
+        // this is because we want to skip leading zero values but not trailing zero values
+        // why would we get leading zero values? when parsing track length because those are always 4 bytes long
+        // why would we get trailing zero values? when parsing encode delta-time values
+        if (! byteArray[i] && ! hasSkippedFirstBitShift) continue;
+
+        // don't shift the first iteration otherwise 1 byte delta-times will be incorrect
+        if (hasSkippedFirstBitShift) result <<= bitsToShift;
+        hasSkippedFirstBitShift = true;
+
+        result |= byteArray[i] & mask;
+    }
+
+    return result;
+}
+
+/**
+ * Returns a bitmask starting from the least significant bits.
+ * bitsToMaskOn  base10  base2
+ * 0             0       00000000
+ * 1             1       00000001
+ * 2             3       00000011
+ * 3             7       00000111
+ * 4             15      00001111
+ * 5             31      00011111
+ * 6             63      00111111
+ * 7             127     01111111
+ * 8             255     11111111
+ * @param {number} bitsToMaskOn how many bits to mask
+ * @returns {number} an 8-bit bitmask starting from the LSB
+ */
+function calculateMask(bitsToMaskOn) {
+    if (bitsToMaskOn < 0 || bitsToMaskOn > 8) throw new Error("bitsToMaskOn must be between 0 and 8 inclusive");
+    return Math.pow(2, bitsToMaskOn) - 1;
 }

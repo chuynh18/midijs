@@ -158,12 +158,3 @@ function validateMidi(header, tracks) {
 function fileSizeExceedsThreshold(file, sizeThreshold = applicationSettings.maxFileSizeBytes) {
     return file.size > sizeThreshold;
 }
-
-
-// test
-console.log(parseVaribleLengthQuantity([0])); // 0
-console.log(parseVaribleLengthQuantity([129,0])); // 128
-console.log(parseVaribleLengthQuantity([192,0])); // 8192
-console.log(parseVaribleLengthQuantity([255,255,127])); // 2097151
-console.log(parseVaribleLengthQuantity([192,128,128,0])); // 134217728
-console.log(parseVaribleLengthQuantity([255,255,255,127])); // 268435455

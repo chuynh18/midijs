@@ -1,6 +1,6 @@
 "use strict";
 
-import parseQuantity from "./parse-quantity.js";
+import parseVaribleLengthQuantity from "./parse-quantity.js";
 
 const applicationSettings = {
     maxFileSizeBytes: 5*1024*1024 // maximum file size to parse
@@ -62,14 +62,7 @@ function findTracks(dataView, dataViewByteLength) {
         let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
-            const trackLength = parseQuantity(
-                parseDataViewSegment(
-                    dataView,
-                    i + midiConstants.magicStringSize,
-                    i + midiConstants.trackHeaderAndLengthSize
-                ),
-                false
-            );
+            const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
 
             trackStart.push({
                 metadata: {
@@ -168,9 +161,9 @@ function fileSizeExceedsThreshold(file, sizeThreshold = applicationSettings.maxF
 
 
 // test
-console.log(parseQuantity([0])); // 0
-console.log(parseQuantity([129,0])); // 128
-console.log(parseQuantity([192,0])); // 8192
-console.log(parseQuantity([255,255,127])); // 2097151
-console.log(parseQuantity([192,128,128,0])); // 134217728
-console.log(parseQuantity([255,255,255,127])); // 268435455
+console.log(parseVaribleLengthQuantity([0])); // 0
+console.log(parseVaribleLengthQuantity([129,0])); // 128
+console.log(parseVaribleLengthQuantity([192,0])); // 8192
+console.log(parseVaribleLengthQuantity([255,255,127])); // 2097151
+console.log(parseVaribleLengthQuantity([192,128,128,0])); // 134217728
+console.log(parseVaribleLengthQuantity([255,255,255,127])); // 268435455

@@ -1,5 +1,3 @@
-"use strict";
-
 import { midiConstants } from "./midi-constants.js";
 
 /**

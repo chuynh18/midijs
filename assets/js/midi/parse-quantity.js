@@ -1,5 +1,3 @@
-"use strict";
-
 // You will be among the first to foray into the depths of this code. We know not what horrors lurk within.
 
 /*

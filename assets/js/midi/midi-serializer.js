@@ -1,7 +1,6 @@
-"use strict";
-
 import { applicationSettings, midiConstants } from "./midi-constants.js";
 import parseVaribleLengthValue from "./parse-quantity.js";
+import parseTrack from "./track.js";
 import { isMidi,
     parseBytes,
     parseDataViewSegment,
@@ -31,7 +30,7 @@ export default async function getMidi(fileSelector) {
                 throw new Error(`Not a valid MIDI file. ${fileName} is ${fileExtension} file.`);
             }
         
-            const tracks = parseTracks(dataView, dataView.byteLength);
+            const tracks = parseTracks(dataView, header);
             
             if (! validateMidi(header, tracks)) {
                 return;
@@ -75,31 +74,35 @@ export function parseHeader(dataView) {
 /**
  * Returns an object that is a representation of the tracks of a MIDI file.
  * @param {DataView} dataView 
- * @param {number} dataViewByteLength
+ * @param {object} header header object from parseHeader()
  * @returns {object}
  */
-function parseTracks(dataView, dataViewByteLength) {
-    const trackStart = [];
-    for (let i = 0; i < dataViewByteLength - 4; i++) {
+function parseTracks(dataView, header) {
+    const tracks = [];
+    const midiFormatType = header.format;
+
+    for (let i = 0; i < dataView.byteLength - 4; i++) {
         let magicString = parseBytes(dataView, i, i + midiConstants.magicStringSize);
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
             const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
             const startingBytes = i + midiConstants.trackHeaderAndLengthSize;
+            const rawTrack = parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength);
+            const track = parseTrack(rawTrack, i, midiFormatType);
 
-            trackStart.push({
+            tracks.push({
                 metadata: {
                     startingBytes: i + startingBytes,
                     trackLength: trackLength
                 },
-                track: parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength)
+                track: rawTrack
             });
 
             i += trackLength;
         }
     }
     
-    return trackStart;
+    return tracks;
 }
 
 /**

@@ -1,6 +1,6 @@
 "use strict";
 
-import parseVaribleLengthQuantity from "./parse-quantity.js";
+import parseVaribleLengthQuantity from "./midi/parse-quantity.js";
 
 // test parseVaribleLengthQuantity() correctly parses MIDI event delta-time VLQs
 const vlq = [

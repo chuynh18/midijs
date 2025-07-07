@@ -1,4 +1,5 @@
 import { midiConstants } from "./midi-constants.js";
+import parseVaribleLengthValue from "./parse-quantity.js";
 
 export const trackMetadata = {
     // 0x00: {type: "sequence number", handler: function() {console.log("TODO")}},
@@ -9,12 +10,23 @@ export const trackMetadata = {
     0x05: {type: "lyric", handler: parseText},
     0x06: {type: "marker", handler: parseText},
     0x07: {type: "cue point", handler: parseText},
+    0x2f: {type: "end track", handler: null},
     // 0x20: {type: "channel prefix", handler: function() {console.log("TODO")}},
     0x51: {type: "set tempo", handler: parseTempo}, // microseconds per quarter note
     // 0x54: {type: "smpte offset", handler: function() {console.log("TODO")}},
     0x58: {type: "time signature", handler: parseTimeSignature},
     0x59: {type: "key signature", handler: parseKeySignature},
     // 0x7F: {type: "sequencer-specific metadata", handler: function() {console.log("TODO")}}
+};
+
+export const midiMessage = {
+    0b1000: {type: "note off event", dataBytes: 2},
+    0b1001: {type: "note on event", dataBytes: 2},
+    0b1010: {type: "polyphonic key pressure", dataBytes: 2},
+    0b1011: {type: "control change or channel mode message", dataBytes: 2},
+    0b1100: {type: "program change", dataBytes: 1},
+    0b1101: {type: "channel pressure", dataBytes: 1},
+    0b1110: {type: "pitch wheel change", dataBytes: 2},
 };
 
 /**

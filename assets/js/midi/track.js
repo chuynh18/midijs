@@ -17,7 +17,7 @@ function handleFormat0(track) {
 
 function handleFormat1(track, trackIndex){
     switch(trackIndex) {
-        case 0: return handleFormat1Track0(track); // the first track in a format 1 MIDI is special
+        case 0: return handleMetadata(track); // the first track in a format 1 MIDI is metadata
         default: return handleTrack(track);
     }
 }
@@ -27,34 +27,48 @@ function handleFormat2(track, trackIndex){
     return handleTrack(track);
 }
 
-function handleFormat1Track0(track) {
+/**
+ * 
+ * @param {Array} track 
+ */
+function handleMetadata(track) {
     const parsedTrack = {};
     const tempArr = [];
-    let hasSkippedFirst = false;
 
     for (let i = 0; i < track.length; i++) {
         if (track[i] === midiConstants.trackMetaDataStartingByte) {
-            if (hasSkippedFirst) {
-                if (trackMetadata[tempArr[0]]) {
-                    parsedTrack[tempArr[0]] = {
-                        type: trackMetadata[tempArr[0]].type,
-                        data: trackMetadata[tempArr[0]].handler(tempArr.slice(2, -1))
-                    };
-                } else {
-                    parsedTrack[tempArr[0]] = Array.from(tempArr.slice(1));
-                }
+            const metaEvent = track[i+1];
+            const messageLength = track[i+2];
+
+            if (trackMetadata[metaEvent]) {
+                
+                if (! trackMetadata[metaEvent].handler) break;
+
+                parsedTrack[metaEvent] = {
+                    type: trackMetadata[metaEvent].type,
+                    data: trackMetadata[metaEvent].handler(track.slice(i+3, i + messageLength + 2))
+                };
+
+                i += messageLength;
+            } else {
+                parsedTrack[tempArr[0]] = Array.from(tempArr.slice(1));
+                tempArr.length = 0;
             }
-            tempArr.length = 0;
-            hasSkippedFirst = true;
         } else {
             tempArr.push(track[i]);
         }
     }
 
-    console.log(parsedTrack);
     return parsedTrack;
 }
 
 function handleTrack(track) {
+    const parsedTrack = {
+        metadata: {},
+        music: []
+    };
+    
+    for (let i = 0; i < track.length; i++) {
 
+    }
 }

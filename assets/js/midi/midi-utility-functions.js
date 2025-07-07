@@ -1,5 +1,22 @@
 import { midiConstants } from "./midi-constants.js";
 
+export const trackMetadata = {
+    // 0x00: {type: "sequence number", handler: function() {console.log("TODO")}},
+    0x01: {type: "text", handler: parseText},
+    0x02: {type: "copyright", handler: parseText},
+    0x03: {type: "sequence/track name", handler: parseText},
+    0x04: {type: "instrument", handler: parseText},
+    0x05: {type: "lyric", handler: parseText},
+    0x06: {type: "marker", handler: parseText},
+    0x07: {type: "cue point", handler: parseText},
+    // 0x20: {type: "channel prefix", handler: function() {console.log("TODO")}},
+    0x51: {type: "set tempo", handler: parseTempo}, // microseconds per quarter note
+    // 0x54: {type: "smpte offset", handler: function() {console.log("TODO")}},
+    0x58: {type: "time signature", handler: parseTimeSignature},
+    0x59: {type: "key signature", handler: parseKeySignature},
+    // 0x7F: {type: "sequencer-specific metadata", handler: function() {console.log("TODO")}}
+};
+
 /**
  * True if MIDI file starts with valid "MThd" header, false otherwise.
  * @param {DataView} dataView the DataView of an ArrayBuffer that contains the entire MIDI file
@@ -78,4 +95,44 @@ export function handleSmtpe(division) {
     }
 
     return smtpe;
+}
+
+function parseText(array) {
+    return array.map(element => String.fromCharCode(element)).join("");
+}
+
+function parseTempo(array) {
+    const MICROSECONDS_PER_SECOND = 1_000_000;
+    const SECONDS_PER_MINUTE = 60;
+    
+    let result = 0;
+
+    for (let i = 0; i < array.length; i++) {
+        result |= array[i];
+
+        if (i < array.length - 1) {
+            result <<= 8;
+        }
+    }
+
+    return {
+        midiTempo: result,
+        musicTempo: MICROSECONDS_PER_SECOND / result * SECONDS_PER_MINUTE
+    };
+}
+
+function parseTimeSignature(array) {
+    return {
+        numerator: array[0],
+        denominator: Math.pow(2, array[1]),
+        clocksPerBeat: array[2],
+        notated32ndNotesPerQuarterNote: array[3]
+    };
+}
+
+function parseKeySignature(array) {
+    return {
+        key: array[0],
+        minorKey: array[1]
+    }
 }

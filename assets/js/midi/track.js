@@ -1,18 +1,5 @@
 import { midiConstants } from "./midi-constants.js";
-
-const trackMetadata = {
-    0x01: {type: "text", handler: parseText},
-    0x02: {type: "copyright", handler: parseText},
-    0x03: {type: "sequence/track name", handler: parseText},
-    0x04: {type: "instrument", handler: parseText},
-    0x05: {type: "lyric", handler: parseText},
-    0x06: {type: "marker", handler: parseText},
-    0x07: {type: "cue point", handler: parseText}
-};
-
-function parseText(array) {
-    return array.map(element => String.fromCharCode(element)).join("");
-}
+import { trackMetadata } from "./midi-utility-functions.js";
 
 export default function parseTrack(track, trackIndex, midiFormatType) {
     switch(midiFormatType) {

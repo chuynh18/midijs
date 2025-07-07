@@ -88,14 +88,14 @@ function parseTracks(dataView, header) {
             const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
             const startingBytes = i + midiConstants.trackHeaderAndLengthSize;
             const rawTrack = parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength);
-            const track = parseTrack(rawTrack, i, midiFormatType);
+            const parsedTrack = parseTrack(rawTrack, tracks.length, midiFormatType);
 
             tracks.push({
                 metadata: {
                     startingBytes: i + startingBytes,
                     trackLength: trackLength
                 },
-                track: rawTrack
+                track: parsedTrack || rawTrack
             });
 
             i += trackLength;

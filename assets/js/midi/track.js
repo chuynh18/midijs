@@ -1,3 +1,19 @@
+import { midiConstants } from "./midi-constants.js";
+
+const trackMetadata = {
+    0x01: {type: "text", handler: parseText},
+    0x02: {type: "copyright", handler: parseText},
+    0x03: {type: "sequence/track name", handler: parseText},
+    0x04: {type: "instrument", handler: parseText},
+    0x05: {type: "lyric", handler: parseText},
+    0x06: {type: "marker", handler: parseText},
+    0x07: {type: "cue point", handler: parseText}
+};
+
+function parseText(array) {
+    return array.map(element => String.fromCharCode(element)).join("");
+}
+
 export default function parseTrack(track, trackIndex, midiFormatType) {
     switch(midiFormatType) {
         case 0: return handleFormat0(track); // format 0 only has one track
@@ -25,7 +41,31 @@ function handleFormat2(track, trackIndex){
 }
 
 function handleFormat1Track0(track) {
+    const parsedTrack = {};
+    const tempArr = [];
+    let hasSkippedFirst = false;
 
+    for (let i = 0; i < track.length; i++) {
+        if (track[i] === midiConstants.trackMetaDataStartingByte) {
+            if (hasSkippedFirst) {
+                if (trackMetadata[tempArr[0]]) {
+                    parsedTrack[tempArr[0]] = {
+                        type: trackMetadata[tempArr[0]].type,
+                        data: trackMetadata[tempArr[0]].handler(tempArr.slice(2, -1))
+                    };
+                } else {
+                    parsedTrack[tempArr[0]] = Array.from(tempArr.slice(1));
+                }
+            }
+            tempArr.length = 0;
+            hasSkippedFirst = true;
+        } else {
+            tempArr.push(track[i]);
+        }
+    }
+
+    console.log(parsedTrack);
+    return parsedTrack;
 }
 
 function handleTrack(track) {

@@ -54,6 +54,7 @@ export default async function getMidi(fileSelector) {
 */
 export function parseHeader(dataView) {
     // MIDI format data is always at offset 8, track count at offset 10, and division at offset 12
+    // yes, division is apparently the name of the unit. it specifies how to interpret the timing of the midi file
     let division = dataView.getUint16(12);
     const smtpe = handleSmtpe(division);
 
@@ -86,6 +87,7 @@ function parseTracks(dataView, header) {
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
             const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
+            console.log("processing track", tracks.length, "at index", i, "track length is", trackLength);
             const startingBytes = i + midiConstants.trackHeaderAndLengthSize;
             const rawTrack = parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength);
             const parsedTrack = parseTrack(rawTrack, tracks.length, midiFormatType);

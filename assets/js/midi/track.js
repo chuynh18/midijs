@@ -1,64 +1,71 @@
 import { midiConstants } from "./midi-constants.js";
-import { trackMetadata } from "./midi-utility-functions.js";
-
-export default function parseTrack(track, trackIndex, midiFormatType) {
-    return handleTrack(track);
-    
-    switch(midiFormatType) {
-        case 0: return handleFormat0(track); // format 0 only has one track
-        case 1: return handleFormat1(track, trackIndex); // multitrack, all music tracks played simultaneously
-        case 2: return handleFormat2(track, trackIndex); // multitrack, tracks may be independent
-        default: throw new Error(`invalid MIDI format value ${midiFormatType}, must be 0, 1, or 2`);
-    }
-}
-
-function handleFormat0(track) {
-    console.log("TODO: MIDI format 0 currently untested. Let's assume its track is simply a music track.");
-    return handleTrack(track);
-}
-
-function handleFormat1(track, trackIndex){
-    switch(trackIndex) {
-        case 0: return handleMetadata(track); // the first track in a format 1 MIDI is metadata
-        default: return handleTrack(track);
-    }
-}
-
-function handleFormat2(track, trackIndex){
-    console.log("TODO: MIDI format 2 currently untested.");
-    return handleTrack(track);
-}
+import { trackMetadata, midiMessage } from "./midi-utility-functions.js";
+import parseVaribleLengthValue from "./parse-quantity.js";
 
 /**
  * 
  * @param {Array} track 
  */
-function handleTrack(track) {
-    const parsedTrack = {};
+export default function parseTrack(track) {
     const tempArr = [];
+    const parsedTrack = {
+        music: []
+    };
 
     for (let i = 0; i < track.length; i++) {
+        // handle metadata event
         if (track[i] === midiConstants.trackMetaDataStartingByte && trackMetadata[track[i+1]]) {
             const metaEvent = track[i+1];
             const messageLength = track[i+2];
 
             if (trackMetadata[metaEvent]) {
                 
-                if (! trackMetadata[metaEvent].handler) break;
+                // intentional null handler for midi track end event
+                if (! trackMetadata[metaEvent].handler) {
+                    console.log("encountered track end at index", i);
+                    break
+                }; 
 
                 parsedTrack[metaEvent] = {
                     type: trackMetadata[metaEvent].type,
-                    
+
                     // skip 3 bytes: first byte is 0xFF, 2nd is the metadata type, 3rd is the message length
                     data: trackMetadata[metaEvent].handler(track.slice(i+3, i + messageLength + 3))
                 };
 
                 i += messageLength;
             } else {
-                parsedTrack[tempArr[0]] = Array.from(tempArr.slice(1));
-                tempArr.length = 0;
+                parsedTrack[tempArr[0]] = Array.from(tempArr.slice(1)); // TODO: probably dead or at least invalid code
             }
-        } else {
+
+        tempArr.length = 0;
+
+        } else if (track[i] < 128) { // encountered delta-time stamp, process it and then handle the following midi event
+            const timeArray = tempArr.concat(track[i]);
+            tempArr.length = 0;
+            const time = parseVaribleLengthValue(timeArray);
+            const potentialMidiMessage = track[i+1] >> 4;
+            let message;
+            
+            // check next byte for midi event
+            if (midiMessage[potentialMidiMessage]) {
+                message = {
+                    type: midiMessage[potentialMidiMessage].type,
+                    typeBinary: track[i+1].toString(2),
+                    data: Array.from(track.slice(potentialMidiMessage + 1, potentialMidiMessage + 1 + midiMessage[potentialMidiMessage].dataBytes))
+                };
+            
+                const midiEvent = {
+                    time: time,
+                    message: message,
+                    index: i+1
+                };
+
+                parsedTrack.music.push(midiEvent);
+                i += midiMessage[potentialMidiMessage].dataBytes + 1;
+            }
+            
+        } else { // don't yet know what this data is, temporarily store it as we might find out what it is later
             tempArr.push(track[i]);
         }
     }

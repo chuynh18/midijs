@@ -1,5 +1,4 @@
 import { midiConstants } from "./midi-constants.js";
-import parseVaribleLengthValue from "./parse-quantity.js";
 
 export const trackMetadata = {
     // 0x00: {type: "sequence number", handler: function() {console.log("TODO")}},
@@ -27,6 +26,7 @@ export const midiMessage = {
     0b1100: {type: "program change", dataBytes: 1},
     0b1101: {type: "channel pressure", dataBytes: 1},
     0b1110: {type: "pitch wheel change", dataBytes: 2},
+    // 0b1111: {type: "system message"}
 };
 
 /**

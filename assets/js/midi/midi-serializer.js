@@ -95,7 +95,8 @@ function parseTracks(dataView, header) {
                     startingBytes: i + startingBytes,
                     trackLength: trackLength
                 },
-                track: parsedTrack || rawTrack
+                track: parsedTrack || rawTrack,
+                rawTrack: rawTrack
             });
 
             i += trackLength;

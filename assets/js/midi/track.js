@@ -2,6 +2,8 @@ import { midiConstants } from "./midi-constants.js";
 import { trackMetadata } from "./midi-utility-functions.js";
 
 export default function parseTrack(track, trackIndex, midiFormatType) {
+    return handleTrack(track);
+    
     switch(midiFormatType) {
         case 0: return handleFormat0(track); // format 0 only has one track
         case 1: return handleFormat1(track, trackIndex); // multitrack, all music tracks played simultaneously
@@ -31,12 +33,12 @@ function handleFormat2(track, trackIndex){
  * 
  * @param {Array} track 
  */
-function handleMetadata(track) {
+function handleTrack(track) {
     const parsedTrack = {};
     const tempArr = [];
 
     for (let i = 0; i < track.length; i++) {
-        if (track[i] === midiConstants.trackMetaDataStartingByte) {
+        if (track[i] === midiConstants.trackMetaDataStartingByte && trackMetadata[track[i+1]]) {
             const metaEvent = track[i+1];
             const messageLength = track[i+2];
 
@@ -46,7 +48,9 @@ function handleMetadata(track) {
 
                 parsedTrack[metaEvent] = {
                     type: trackMetadata[metaEvent].type,
-                    data: trackMetadata[metaEvent].handler(track.slice(i+3, i + messageLength + 2))
+                    
+                    // skip 3 bytes: first byte is 0xFF, 2nd is the metadata type, 3rd is the message length
+                    data: trackMetadata[metaEvent].handler(track.slice(i+3, i + messageLength + 3))
                 };
 
                 i += messageLength;
@@ -60,15 +64,4 @@ function handleMetadata(track) {
     }
 
     return parsedTrack;
-}
-
-function handleTrack(track) {
-    const parsedTrack = {
-        metadata: {},
-        music: []
-    };
-    
-    for (let i = 0; i < track.length; i++) {
-
-    }
 }

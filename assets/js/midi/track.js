@@ -6,7 +6,7 @@ import parseVariableLengthValue from "./parse-quantity.js";
  * 
  * @param {Array} track 
  */
-export default function parseTrack(track) {
+export function parseTrack(track) {
     let runningStatus;
     const tempArray = [];
     const parsedTrack = {
@@ -77,10 +77,6 @@ export default function parseTrack(track) {
 
 function createMessage(track, messageType, time, dataIndexStart, dataIndexEnd) {
     const data = track.slice(dataIndexStart + 1, dataIndexEnd);
-    const message = {
-    type: messageType,
-    data: track.slice(dataIndexStart + 1, dataIndexEnd)
-    };
     const note = resolveNote(data);
 
     const midiEvent = {
@@ -89,10 +85,10 @@ function createMessage(track, messageType, time, dataIndexStart, dataIndexEnd) {
         index: dataIndexStart
     };
 
-    if (messageType === midiMessage[0b1000] || messageType === midiMessage[0b1001]) {
+    if (messageType === midiMessage[0b1000].type || messageType === midiMessage[0b1001].type) {
         midiEvent.midiNote = note.midiNote;
         midiEvent.pianoNote = note.pianoNote;
-        midiEvent.volume = note.volume;
+        midiEvent.velocity = note.velocity;
     } else {
         midiEvent.data = data;
     }
@@ -104,6 +100,46 @@ function resolveNote(data) {
     return {
         midiNote: data[0],
         pianoNote: data[0] - 20,
-        volume: data[1]
+        velocity: data[1]
     };
+}
+
+// naively written with the assumption that every note being played will be commanded to cease being played
+export function postprocess(parsedTrack) {
+    const currentlyPlaying = {};
+    const postprocessed = [];
+    let runningTime = 0;
+
+    for (let i = 0; i < parsedTrack.length; i++) {
+        const currentCommand = parsedTrack[i];
+        runningTime += currentCommand.time;
+
+        if ((currentCommand.type === midiMessage[0b1001].type &&
+            currentCommand.velocity === 0) ||
+            currentCommand.type === midiMessage[0b1000].type
+        ) {
+            // a note is being stopped
+            const postProcessedNote = {
+                midiNote: currentCommand.midiNote,
+                pianoNote: currentCommand.pianoNote,
+                velocity: currentlyPlaying[currentCommand.midiNote].velocity,
+                startTime: currentlyPlaying[currentCommand.midiNote].startTime,
+                duration: runningTime - currentlyPlaying[currentCommand.midiNote].startTime,
+                type: currentlyPlaying[currentCommand.midiNote].type
+            };
+
+            postprocessed.push(postProcessedNote);
+            delete currentlyPlaying[currentCommand.midiNote];
+        } else if (currentCommand.type === midiMessage[0b1001].type) {
+            // a note is being started, track it in the currentlyPlaying object
+            currentCommand.startTime = runningTime;
+            currentlyPlaying[currentCommand.midiNote] = currentCommand;
+        } else {
+            // this is naive, we'll eventually handle the damper pedal here
+            currentCommand.startTime = runningTime;
+            postprocessed.push(currentCommand);
+        }
+    }
+
+    return postprocessed.sort((a,b) => a.startTime - b.startTime);
 }

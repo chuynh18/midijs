@@ -1,6 +1,5 @@
 import { applicationSettings, midiConstants } from "./midi-constants.js";
-import parseVariableLengthValue from "./parse-quantity.js";
-import parseTrack from "./track.js";
+import { parseTrack, postprocess } from "./track.js";
 import { isMidi,
     parseBytes,
     parseDataViewSegment,
@@ -40,6 +39,9 @@ export default async function getMidi(fileSelector) {
                 header: header,
                 tracks: tracks
             };
+
+            // ugh, ugly
+            midi.header.ticksPerSecond = midi.header.division*midi.tracks[0].track[81].data.musicTempo/60;
 
             return midi;
         }
@@ -97,12 +99,17 @@ function parseTracks(dataView, header) {
                     trackLength: trackLength
                 },
                 track: parsedTrack || rawTrack,
-                rawTrack: rawTrack
             });
 
             i += trackLength;
         }
     }
+
+    tracks.forEach(track => {
+        if (track.track.music.length > 0) {
+            track.playableMusic = postprocess(track.track.music);
+        }
+    });
     
     return tracks;
 }

@@ -1,5 +1,5 @@
 import { applicationSettings, midiConstants } from "./midi-constants.js";
-import parseVaribleLengthValue from "./parse-quantity.js";
+import parseVariableLengthValue from "./parse-quantity.js";
 import parseTrack from "./track.js";
 import { isMidi,
     parseBytes,
@@ -87,7 +87,6 @@ function parseTracks(dataView, header) {
 
         if (midiConstants[magicString] === midiConstants.MTrk) {
             const trackLength = dataView.getUint32(i + midiConstants.magicStringSize);
-            console.log("processing track", tracks.length, "at index", i, "track length is", trackLength);
             const startingBytes = i + midiConstants.trackHeaderAndLengthSize;
             const rawTrack = parseDataViewSegment(dataView, startingBytes, startingBytes + trackLength);
             const parsedTrack = parseTrack(rawTrack, tracks.length, midiFormatType);

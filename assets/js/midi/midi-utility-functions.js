@@ -26,7 +26,7 @@ export const midiMessage = {
     0b1100: {type: "program change", dataBytes: 1},
     0b1101: {type: "channel pressure", dataBytes: 1},
     0b1110: {type: "pitch wheel change", dataBytes: 2},
-    // 0b1111: {type: "system message"}
+    0b1111: {type: "system message", dataBytes: 2} // not correct, but sufficient for now
 };
 
 /**

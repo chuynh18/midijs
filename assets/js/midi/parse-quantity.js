@@ -18,7 +18,7 @@
  * @param {number[]} byteArray Array representing the raw bytes read from MIDI file
  * @returns {number} The encoded value
  */
-export default function parseVaribleLengthValue(byteArray) {
+export default function parseVariableLengthValue(byteArray) {
     const BITS_TO_SHIFT = 7; // always 7 because variable length quantities don't use the MSB to hold value data
     return twiddle(byteArray, BITS_TO_SHIFT);
 }

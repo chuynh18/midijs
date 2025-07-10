@@ -4,7 +4,7 @@ import { isMidi,
     parseBytes,
     parseDataViewSegment,
     validateMidi,
-    handleSmpte as handleSmpte } from "./midi-utility-functions.js";
+    handleSmpte } from "./midi-utility-functions.js";
 
 /**
  * @param {HTMLInputElement} fileSelector

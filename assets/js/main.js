@@ -8,7 +8,7 @@ fileInput.addEventListener("change", () => {
     getMidi(fileInput)
         .then(result => {
             console.log(result);
-            globalThis.midi = result; // if you want to make it available in the global scope
+            globalThis.midiFile = result; // if you want to make it available in the global scope
         })
         .catch(error => console.log(error));
 });

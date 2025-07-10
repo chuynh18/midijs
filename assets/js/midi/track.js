@@ -20,7 +20,6 @@ export function parseTrack(track) {
             const messageLength = track[i+2];
 
             if (trackMetadata[metaEvent]) {
-                
                 // intentional null handler for midi track end event
                 if (! trackMetadata[metaEvent].handler) break;
 
@@ -38,7 +37,8 @@ export function parseTrack(track) {
 
         tempArray.length = 0;
 
-        } else if (track[i] < 128 && track[i+1] != 0xFF) { // encountered delta-time stamp, process it and then handle the following midi event
+        // encountered delta-time stamp, process variable-length value and then handle the following midi event
+        } else if (track[i] < 128 && track[i+1] != 0xFF) {
             const timeArray = tempArray.concat(track[i]);
             tempArray.length = 0;
             const time = parseVariableLengthValue(timeArray);
@@ -99,7 +99,7 @@ function createMessage(track, messageType, time, dataIndexStart, dataIndexEnd) {
 function resolveNote(data) {
     return {
         midiNote: data[0],
-        pianoNote: data[0] - 20,
+        pianoNote: data[0] - 20, // the piano key number is simply 20 lower than the midi note number
         velocity: data[1]
     };
 }

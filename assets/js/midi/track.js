@@ -164,11 +164,24 @@ export function postprocess(parsedTrack) {
         }
     }
 
-    const lastNote = postprocessed[postprocessed.length-1];
+    let lastNote;
+
+    for (let i = postprocessed.length - 1; i > 0; i--) {
+        console.log(i);
+        if (postprocessed[i].pianoNote) {
+            lastNote = postprocessed[i];
+            break;
+        }
+    }
+
+    let lastNoteDuration = 0;
+    if (lastNote.duration) {
+        lastNoteDuration = lastNote.duration;
+    }
 
     return {
         music: postprocessed.sort((a,b) => a.startTime - b.startTime),
         startTime: postprocessed[0].startTime,
-        endTime: lastNote.startTime + lastNote.time
+        endTime: lastNote.startTime + lastNoteDuration
     };
 }
